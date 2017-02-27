@@ -18,7 +18,6 @@ function handler(req, res) {
 }
 
 var isCMConnected = false;
-var userCount = 0;
 var users = [];
 
 function getUserCount(){
@@ -31,7 +30,6 @@ function getUserList() {
 
 io.on('connect', function (socket) {
     socket.broadcast.emit('message', {uname: 'System', type: 'system', message: 'A user connected.'});
-    userCount++;
     console.log('User connected');
 
     socket.on('new message', function (data) {
@@ -41,7 +39,6 @@ io.on('connect', function (socket) {
 
     socket.on('disconnect', function () {
         socket.broadcast.emit('message', {uname: 'System', type: 'system', message: 'A user disconnected.'});
-        userCount--;
     });
 
     socket.on('cm-connect',function (data) {
