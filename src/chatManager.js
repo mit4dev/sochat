@@ -19,7 +19,6 @@ chatManager.prototype.getName = function () {
 chatManager.prototype.addBlockedUser = function (userobj) {
     if (this.blockedUserList.indexOf(userobj) == -1) {
         this.blockedUserList.push(userobj);
-        this.blockedUserCount++;
     } else console.log("User object, " + userobj + ", is already blocked");
 };
 
@@ -27,14 +26,13 @@ chatManager.prototype.deleteBlockedUser = function (userobj) {
     var index;
     if ((index = this.blockedUserList.indexOf(userobj)) !== -1) {
         this.blockedUserList.splice(index, 1);
-        this.blockedUserCount--;
     } else console.log("User cannot be found in blockedUserList, " + userobj);
 };
 
-
+//TODO: decide on the best practice upon determining itemIndex.
 chatManager.prototype.addBlockedWord = function (word) {
     var index;
-    if ((index = this.blockedWordList).indexOf(word) == -1) {
+    if ((index = this.blockedWordList.indexOf(word)) == -1) {
         this.blockedWordList.push(word);
     }
     else console.log("Word is already blocked: " + word);
@@ -107,17 +105,19 @@ chatManager.prototype.sendCommand = function (commandObj) {
 };
 
 chatManager.prototype.sendMessage = function (messageObj) {
-    if (this.socket.connected) { //TODO: change username (string) to userID (int). Because blocking some username like r will eliminate all messages from senders that have r in their username.
-        if (!this.isSourceContainsArrayElement(messageObj.message, this.blockedWordList) && !this.isSourceContainsArrayElement(messageObj.username, this.blockedUserList)) {
+    if (this.socket.connected) {
+        //TODO: change username (string) to userID (int). Because blocking some username like r will eliminate all messages from senders that have r in their username.
+        if (!this.containsArrayElement(messageObj.message, this.blockedWordList) && !this.isExactMatch(messageObj.username, this.blockedUserList)) {
             this.socket.emit("cm-new-message", messageObj);
         }
         else {
             console.log("Message blocked: " + messageObj.message);
+            this.blockedMessagesList.push(messageObj);
         }
     } else console.log("Cannot emit message, socket is disconnected");
 };
 
-chatManager.prototype.isSourceContainsArrayElement = function (sourceString, array) {
+chatManager.prototype.containsArrayElement = function (sourceString, array) {
     for (i = 0; i < array.length; i++) {
         if (sourceString.indexOf(array[i]) !== -1) {
             console.log("Source: " + sourceString + ", contains array element " + i + ": " + array[i]);
@@ -127,9 +127,17 @@ chatManager.prototype.isSourceContainsArrayElement = function (sourceString, arr
     return false;
 };
 
+chatManager.prototype.isExactMatch = function (source, array) {
+    for (i = 0; i < array.length; i++) {
+        if (array[i] === source)
+            return true;
+    }
+    return false;
+};
+
 chatManager.prototype.processMessage = function (messageObj) {
     this.totalMessageCount++;
-    if (!this.isSourceContainsArrayElement(messageObj.message, this.blockedWordList) && !this.isSourceContainsArrayElement(messageObj.username, this.blockedUserList)) {
+    if (!this.containsArrayElement(messageObj.message, this.blockedWordList) && !this.containsArrayElement(messageObj.username, this.blockedUserList)) {
         return messageObj;
     }
     else {
@@ -137,10 +145,6 @@ chatManager.prototype.processMessage = function (messageObj) {
         console.log("Message blocked: " + messageObj.message);
         return false;
     }
-};
-
-chatManager.prototype.isExactMatch = function (string,list) {
-
 };
 
 
@@ -166,10 +170,6 @@ chatManager.prototype.isReconnecting = function () {
 chatManager.prototype.isReconnected = function () {
 
 };
-
-// chatManager.socket.on("connect",function (data) {
-//    console.log("I got this message from server: " + data);
-// });
 
 
 function instantiateCM() {
