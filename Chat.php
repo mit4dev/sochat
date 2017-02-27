@@ -16,7 +16,6 @@
         socket.on('message', function (data) {
             console.log(data);
             appendMessage('<span style="color:' + data.color + '">' + data.uname + '</span>' + ' : ' + data.message);
-            scrollToBottom();
         });
 
         socket.on('disconnect', function () {
@@ -26,7 +25,6 @@
 
         socket.on('reconnecting', function () {
             appendMessage('...Trying to reconnect...');
-            scrollToBottom();
             document.getElementById('sendButton').disabled = true;
         });
 
@@ -48,8 +46,6 @@
                 socket.emit('new message', {uname: username.value, message: userMessage.value, color: ucolor});
                 appendMessage('<span style="color:' + ucolor + '">' + username.value + '</span>' + '(You): ' + userMessage.value);
                 userMessage.value = "";
-
-                scrollToBottom();
             }
         }
 
@@ -65,6 +61,7 @@
             td.innerHTML = message;
             tr.appendChild(td);
             table.appendChild(tr);
+            scrollToBottom();
         }
 
         function generateRandomColor() {
@@ -73,7 +70,6 @@
             for (i = 0; i < 6; i++) {
                 color += keys[Math.floor((Math.random() * keys.length))];
             }
-//            console.log(color);
             return color;
         }
 
@@ -81,8 +77,6 @@
             var objDiv = document.getElementById("ChatBoardWrapper");
             objDiv.scrollTop = objDiv.scrollHeight;
         }
-
-//        setInterval("scrollToBottom()",1000);
 
         var ucolor = generateRandomColor();
 
