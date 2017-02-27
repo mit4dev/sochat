@@ -20,10 +20,6 @@ function handler(req, res) {
 var isCMConnected = false;
 var users = [];
 
-function getUserCount(){
-    return userCount;
-}
-
 function getUserList() {
     return users;
 }
