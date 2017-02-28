@@ -55,6 +55,7 @@ chatManager.prototype.addChatCommand = function (commandobj) {
 };
 
 chatManager.prototype.init = function () {
+    _this = this;
     this.totalMessageCount = 0;
     this.socketUri = "192.168.1.21:8000";
     this.blockedWordList = [];
@@ -71,28 +72,31 @@ chatManager.prototype.init = function () {
 
     this.socket.on("connect", function () {
         console.log("CM  connected to the socket!");
-        this.connected = true;
+        _this.connected = true;
         //TODO: send appropriate handshaking message to the server.
     });
 
     this.socket.on("disconnect", function () {
-        this.disconnected = true;
-        this.connected = false;
+        _this.disconnected = true;
+        _this.connected = false;
         console.log("CM disconnected from the socket!");
     });
 
     this.socket.on("reconnect", function () {
-        this.disconnected = false;
-        this.connected = true;
-        this.reconnected = true;
+        _this.disconnected = false;
+        _this.connected = true;
+        _this.reconnected = true;
     });
 };
 
-chatManager.prototype.setSocketUri = function (socketUri) {
+chatManager.prototype.updateSocketUri = function (socketUri) {
     this.socketUri = socketUri;
+    this.socket = io(this.socketUri);
+    return this.socket;
 };
 
 chatManager.prototype.getSocketUri = function () {
+    console.log(this.socketUri);
     return this.socketUri;
 };
 
@@ -104,14 +108,14 @@ chatManager.prototype.sendCommand = function (commandObj) {
     }
 };
 
+//TODO: change username (string) to userID (int). Because blocking some username like r will eliminate all messages from senders that have r in their username.
 chatManager.prototype.sendMessage = function (messageObj) {
     if (this.socket.connected) {
-        //TODO: change username (string) to userID (int). Because blocking some username like r will eliminate all messages from senders that have r in their username.
-        if (!this.containsArrayElement(messageObj.message, this.blockedWordList) && !this.isExactMatch(messageObj.username, this.blockedUserList)) {
+        if (this.isMessageClear(messageObj)) {
             this.socket.emit("cm-new-message", messageObj);
         }
         else {
-            console.log("Message blocked: " + messageObj.message);
+            console.log("ProcessMessage is false. Inside sendMessage. Message blocked: " + messageObj.message);
             this.blockedMessagesList.push(messageObj);
         }
     } else console.log("Cannot emit message, socket is disconnected");
@@ -129,47 +133,26 @@ chatManager.prototype.containsArrayElement = function (sourceString, array) {
 
 chatManager.prototype.isExactMatch = function (source, array) {
     for (i = 0; i < array.length; i++) {
-        if (array[i] === source)
+        if (array[i] === source) {
+            console.log("Source: " + source + ", contains array element " + i + ": " + array[i]);
             return true;
+        }
     }
     return false;
 };
 
-chatManager.prototype.processMessage = function (messageObj) {
+chatManager.prototype.isMessageClear = function (messageObj) {
     this.totalMessageCount++;
-    if (!this.containsArrayElement(messageObj.message, this.blockedWordList) && !this.containsArrayElement(messageObj.username, this.blockedUserList)) {
-        return messageObj;
+    if (!this.containsArrayElement(messageObj.message, this.blockedWordList) && !this.isExactMatch(messageObj.username, this.blockedUserList)) {
+        return true;
     }
     else {
         this.blockedMessagesList.push(messageObj);
-        console.log("Message blocked: " + messageObj.message);
+        console.log("Processed message blocked: " + messageObj.message);
         return false;
     }
 };
 
-
-//TODO: instead of functions, re-define these as fields (boolean)
-chatManager.prototype.connectSocket = function () {
-    //TODO: connection stuff
-};
-
-
-chatManager.prototype.disconnectSocket = function () {
-
-};
-
-chatManager.prototype.isSocketDisconnected = function () {
-    //TODO: return socket.on('disconnect')
-};
-
-
-chatManager.prototype.isReconnecting = function () {
-
-};
-
-chatManager.prototype.isReconnected = function () {
-
-};
 
 
 function instantiateCM() {
