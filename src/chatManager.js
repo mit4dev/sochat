@@ -115,7 +115,7 @@ chatManager.prototype.sendMessage = function (messageObj) {
             this.socket.emit("cm-new-message", messageObj);
         }
         else {
-            console.log("ProcessMessage is false. Inside sendMessage. Message blocked: " + messageObj.message);
+            console.log("isMessageClear is false. Inside sendMessage. Message blocked: " + messageObj.message);
             this.blockedMessagesList.push(messageObj);
         }
     } else console.log("Cannot emit message, socket is disconnected");
